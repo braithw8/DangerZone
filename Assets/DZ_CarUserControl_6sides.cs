@@ -16,7 +16,9 @@ namespace UnityStandardAssets.Vehicles.Car
         public Vector3 gravityVector;
         bool Rotate = false;
         Quaternion WantedRotation;
+        private Quaternion cameraWantedRotation;
         AudioSource bgMusic;
+        //Transform cameraPivotTransform;
         public GameObject BGmusic; 
         private float t = 0.0f;
         private float desiredPitch = 1;
@@ -24,6 +26,12 @@ namespace UnityStandardAssets.Vehicles.Car
         public Text countText;
         public Text winText;
         private int count;
+        private bool backwardState = false;
+        public GameObject cameraPivot;
+        //private Quaternion cameraRotation;
+        private Vector3 cameraWantedPosition;
+        //private Vector3 WantedRotationV;
+        //private float timeFactor;
 
 
 
@@ -31,12 +39,16 @@ namespace UnityStandardAssets.Vehicles.Car
         {
 
             bgMusic = BGmusic.GetComponent<AudioSource>();
+            //cameraRotation = cameraPivot.transform.rotation;
+            //cameraPosition = cameraPivot.transform.position;
+
+
 
             // get the car controller
             m_Car = GetComponent<CarController>();
             gravityVector = new Vector3(0.0f, gravityStrength, 0.0f);
             rotateState = 1;
-
+            Time.timeScale = 2.0f;
         }
 
 
@@ -46,8 +58,10 @@ namespace UnityStandardAssets.Vehicles.Car
             if (Input.GetButtonDown("Fire1"))
             {
                 t = 0;
-                Rotatator(0.0f, gravityStrength, 0.0f, 0.0f, 0.0f, 0.0f, 1);
+                Rotatator(0.0f, gravityStrength, 0.0f, 0.0f, 113, 0.0f, 1);
                 Physics.gravity = gravityVector;
+                Time.timeScale = 2.0f;
+                backwardState = false;
                 
 
             }
@@ -55,62 +69,111 @@ namespace UnityStandardAssets.Vehicles.Car
             if (Input.GetButtonDown("Fire2"))
             {
                 t = 0;
-                Rotatator(0.0f, -gravityStrength, 0.0f, 0, 0.0f, 90, 0.5f);
+                Rotatator(0.0f, -gravityStrength, 0.0f, 0, 34.44f, 180, 0.5f);
                 Physics.gravity = gravityVector;
+                Time.timeScale = 1.0f;
+                backwardState = false;
+
 
             }
 
             if (Input.GetButtonDown("Jump"))
             {
                 t = 0;
-                Rotatator(0.0f, 0.0f, gravityStrength, -180, 180, 180, -1.0f);
+                Rotatator(0.0f, 0.0f, gravityStrength, 21, 90, 90, -1.0f);
                 Physics.gravity = gravityVector;
+                Time.timeScale = 2.0f;
+                backwardState = true;
+
+
 
             }
 
             if (Input.GetButtonDown("Fire3"))
             {
                 t = 0;
-                Rotatator(0.0f, 0.0f, -gravityStrength, -90, 90, -90, -0.25f);
+                Rotatator(0.0f, 0.0f, -gravityStrength, -50, 90, -90, -0.25f);
                 Physics.gravity = gravityVector;
+                Time.timeScale = 0.5f;
+                backwardState = true;
+
+
 
             }
 
             if (Input.GetButtonDown("Extra1"))
             {
                 t = 0;
-                Rotatator(gravityStrength, 0.0f, 0.0f, -90, 0, -90, -0.5f);
+                Rotatator(gravityStrength, 0.0f, 0.0f, 33, 180, 90, -0.5f);
                 Physics.gravity = gravityVector;
+                Time.timeScale = 1.0f;
+                backwardState = true;
+
 
             }
 
             if (Input.GetButtonDown("Extra2"))
             {
                 t = 0;
-                Rotatator(-gravityStrength, 0.0f, 0.0f, -90, 0, 90, 0.25f);
+                Rotatator(-gravityStrength, 0.0f, 0.0f, 57, 0, 90, 0.25f);
                 Physics.gravity = gravityVector;
+                Time.timeScale = 0.50f;
+                backwardState = false;
+
 
             }
 
+            if (backwardState == false)
+            {
+                cameraWantedRotation.eulerAngles = new Vector3(0, 0, 0);
+            }
+
+            if (backwardState == true)
+            {
+                cameraWantedRotation.eulerAngles = new Vector3(0, 180, 0);
+            }
 
 
-
+            //cameraPivot.transform.Rotate(cameraWantedRotation.eulerAngles * Time.deltaTime, Space.Self);
+            cameraPivot.transform.localRotation = cameraWantedRotation;
 
             bgMusic.pitch = Mathf.Lerp(bgMusic.pitch, desiredPitch, t);
+
+            //Time.timeScale = Mathf.Lerp(Time.timeScale, timeFactor, t);
             t += 0.02f * Time.deltaTime;
 
-            
             if (t < 0.15f)
             {
+                //transform.Rotate(WantedRotationV * Time.deltaTime, Space.World);
+                transform.localRotation = Quaternion.Slerp(transform.rotation, WantedRotation, Time.deltaTime * 2.0f);
+
+
                 Debug.Log("rotating");
-                transform.rotation = Quaternion.Lerp(transform.rotation, WantedRotation, Time.deltaTime);
             }
             else
             {
                 Debug.Log("not rotating");
             }
-            
 
+            /*
+                        if (t < 0.15f)
+                        {
+                            Debug.Log("rotating");
+                            transform.rotation = Quaternion.Lerp(transform.rotation, WantedRotation, Time.deltaTime);
+                        }
+                        else
+                        {
+                            Debug.Log("not rotating");
+                        }*/
+
+
+
+
+
+
+
+                
+                   
 
 
 
@@ -125,7 +188,16 @@ namespace UnityStandardAssets.Vehicles.Car
             float v = CrossPlatformInputManager.GetAxis("Vertical");
 #if !MOBILE_INPUT
             float handbrake = CrossPlatformInputManager.GetAxis("Jump");
-            m_Car.Move(h, v, v, handbrake);
+            if (backwardState)
+            {
+                m_Car.Move(-h, -v, -v, handbrake);
+
+            }
+            else
+            {
+                m_Car.Move(h, v, v, handbrake);
+
+            }
 #else
             m_Car.Move(h, v, v, 0f);
             
@@ -136,12 +208,16 @@ namespace UnityStandardAssets.Vehicles.Car
         {
 
             gravityVector = new Vector3(gravityX, gravityY, gravityZ);
-            WantedRotation = transform.rotation;
+            //WantedRotation = transform.rotation;
             WantedRotation.eulerAngles = new Vector3(rotationX, rotationY, rotationZ);
+            //WantedRotationV = new Vector3(rotationX, rotationY, rotationZ);
             desiredPitch = desiredpitch;
 
 
+
         }
+
+
 
         void OnTriggerEnter(Collider other)
         {
